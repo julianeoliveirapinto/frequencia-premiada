@@ -68,7 +68,10 @@ export const loginAluno = async (req: Request, res: Response) => {
 
   try {
     // Busca o aluno no banco
-    const aluno = await prisma.aluno.findUnique({ where: { matricula } })
+    const aluno = await prisma.aluno.findUnique({
+      where: { matricula },
+      include: { turma: { select: { id: true, nome: true } } },
+    })
 
     if (!aluno) {
       return res.status(404).json({ erro: 'Aluno não encontrado' })
@@ -114,6 +117,10 @@ export const obterMeuPerfil = async (req: Request, res: Response) => {
         matricula: true,
         turmaId: true,
         pontos: true,
+        primeiro_acesso: true,
+        termo_versao: true,
+        termo_ciente_em: true,
+        turma: { select: { id: true, nome: true } },
       },
     })
 
