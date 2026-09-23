@@ -1,13 +1,14 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react'
 import { api, configurarSessaoExpirada, configurarToken } from '../services/api'
 import { lerSessao, limparSessaoArmazenada, salvarSessao } from '../services/sessionStorage'
-import { Sessao } from '../types/session'
+import { Aluno, Sessao } from '../types/session'
 
 type AuthContextValue = {
   sessao: Sessao | null
   carregando: boolean
   aviso: string | null
   entrar: (sessao: Sessao) => Promise<void>
+  atualizarAluno: (aluno: Aluno) => Promise<void>
   sair: () => Promise<void>
   limparAviso: () => void
 }
@@ -35,8 +36,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (!armazenada) return
       try {
         configurarToken(armazenada.token)
-        await api.get('/auth/me')
-        setSessao(armazenada)
+        if (armazenada.perfil === 'aluno') {
+          const { data } = await api.get<Aluno>('/alunos/me')
+          const restaurada: Sessao = { ...armazenada, usuario: data }
+          await salvarSessao(restaurada)
+          setSessao(restaurada)
+        } else {
+          await api.get('/auth/me')
+          setSessao(armazenada)
+        }
       } catch {
         configurarToken(null)
         await limparSessaoArmazenada()
@@ -54,7 +62,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setSessao(novaSessao)
   }
 
-  return <AuthContext.Provider value={{ sessao, carregando, aviso, entrar, sair, limparAviso: () => setAviso(null) }}>{children}</AuthContext.Provider>
+  const atualizarAluno = async (aluno: Aluno) => {
+    if (sessao?.perfil !== 'aluno') return
+    const atualizada: Sessao = { ...sessao, usuario: aluno }
+    await salvarSessao(atualizada)
+    setSessao(atualizada)
+  }
+
+  return <AuthContext.Provider value={{ sessao, carregando, aviso, entrar, atualizarAluno, sair, limparAviso: () => setAviso(null) }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
@@ -62,4 +77,3 @@ export function useAuth() {
   if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider')
   return context
 }
-
