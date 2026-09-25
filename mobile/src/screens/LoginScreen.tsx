@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const API_URL = 'https://tavern-buzz-helpless.ngrok-free.dev'
+const API_URL = process.env.EXPO_PUBLIC_API_URL
 
 export default function LoginScreen({ navigation }: any) {
   const [matricula, setMatricula] = useState('')
@@ -12,6 +12,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const onLogin = async () => {
     if (!matricula || !senha) return Alert.alert('Atenção', 'Preencha matrícula e senha.')
+    if (!API_URL) return Alert.alert('Configuração', 'Defina EXPO_PUBLIC_API_URL para acessar a API.')
     setLoading(true)
     try {
       const response = await axios.post(`${API_URL}/alunos/login`, { matricula, senha })

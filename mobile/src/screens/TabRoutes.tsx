@@ -7,6 +7,7 @@ import HomeScreen from './HomeScreen';
 import PresencasScreen from './PresencasScreen';
 import RelatoriosScreen from './RelatoriosScreen';
 import PerfilScreen from './PerfilScreen';
+import RankingScreen from './RankingScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -45,6 +46,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         if (route.name === 'Home') icon = '⌂';
         if (route.name === 'Presencas') icon = '📡';
         if (route.name === 'Relatorios') icon = '📊';
+        if (route.name === 'Ranking') icon = '★';
         if (route.name === 'Perfil') icon = '♙';
 
         return (
@@ -75,6 +77,7 @@ export default function TabRoutes() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Início' }} />
       <Tab.Screen name="Presencas" component={PresencasScreen} options={{ tabBarLabel: 'Presença' }} />
       <Tab.Screen name="Relatorios" component={RelatoriosScreen} options={{ tabBarLabel: 'Relatórios' }} />
+      <Tab.Screen name="Ranking" component={RankingScreen} options={{ tabBarLabel: 'Ranking' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ tabBarLabel: 'Perfil' }} />
     </Tab.Navigator>
   );
@@ -93,24 +96,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   navItem: {
-    minWidth: 76,
+    minWidth: 54,
     height: 64,
     alignItems: 'center',
     justifyContent: 'center',
   },
   navItemActive: {
-    minWidth: 130,
+    minWidth: 88,
     borderRadius: 32,
     backgroundColor: colors.primaryContainer,
   },
   navIcon: {
     color: colors.onSurfaceVariant,
-    fontSize: 27,
+    fontSize: 23,
     fontWeight: '900',
   },
   navIconActive: {
     color: colors.onPrimaryContainer,
-    fontSize: 25,
+    fontSize: 23,
     fontWeight: '900',
   },
   navText: {
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
   },
   navTextActive: {
     color: colors.onPrimaryContainer,
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '800',
   },
 });

@@ -5,9 +5,10 @@ import {
   listarAlunosPorTurma, 
   buscarAlunoPorTag, 
   rankingPorTurma,
+  meuRanking,
   vincularNfc 
 } from '../controllers/alunoController'
-import { autenticar } from '../middlewares/authMiddleware'
+import { autenticar, autorizarRole } from '../middlewares/authMiddleware'
 
 const router = Router()
 
@@ -18,18 +19,19 @@ router.post('/login', loginAluno)
 // 2. ROTAS PROTEGIDAS (Exigem Token de autenticação)
 
 // Cadastro inicial do aluno (via painel web do professor/admin)
-router.post('/', autenticar, cadastrarAluno)
+router.post('/', autenticar, autorizarRole(['professor']), cadastrarAluno)
 
 // Listagem da turma (para o app/painel do professor)
-router.get('/turma/:turmaId', autenticar, listarAlunosPorTurma)
+router.get('/turma/:turmaId', autenticar, autorizarRole(['professor']), listarAlunosPorTurma)
 
 // O "Bip" da tag NFC
-router.get('/tag/:nfc_uid', autenticar, buscarAlunoPorTag)
+router.get('/tag/:nfc_uid', autenticar, autorizarRole(['professor']), buscarAlunoPorTag)
 
-// Gamificação - Ranking público da turma
-router.get('/ranking/:turmaId', autenticar, rankingPorTurma)
+// Legacy dashboard endpoint; controller limits it to professors.
+router.get('/ranking/:turmaId', autenticar, autorizarRole(['professor']), rankingPorTurma)
+router.get('/me/ranking', autenticar, meuRanking)
 
 // "Batismo" da Tag - Associa a tag física a um aluno já matriculado
-router.patch('/vincular-nfc', autenticar, vincularNfc)
+router.patch('/vincular-nfc', autenticar, autorizarRole(['professor']), vincularNfc)
 
 export default router

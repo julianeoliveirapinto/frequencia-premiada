@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { prisma } from '../prisma'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { LEVELS, POINTS_PER_PRESENCE, progressFor } from '../gamification/rules'
 
 // 1. Cadastrar aluno (Atualizado para receber Senha e Apelido)
 export const cadastrarAluno = async (req: Request, res: Response) => {
@@ -149,6 +150,11 @@ export const buscarAlunoPorTag = async (req: Request, res: Response) => {
 export const rankingPorTurma = async (req: Request, res: Response) => {
   const { turmaId } = req.params
 
+  // This legacy endpoint serves the professor dashboard only.
+  if (req.user?.role !== 'professor') {
+    return res.status(403).json({ erro: 'Acesso restrito ao professor' })
+  }
+
   try {
     const alunos = await prisma.aluno.findMany({
       where: { turmaId: String(turmaId) },
@@ -164,6 +170,53 @@ export const rankingPorTurma = async (req: Request, res: Response) => {
     return res.json(alunos)
   } catch (error) {
     return res.status(500).json({ erro: 'Erro interno do servidor ao gerar ranking' })
+  }
+}
+
+// Student endpoint: derive the class from the verified token and return only
+// safe display labels. Never send classmates' ids or full names.
+export const meuRanking = async (req: Request, res: Response) => {
+  if (req.user?.role !== 'aluno') {
+    return res.status(403).json({ erro: 'Acesso restrito ao aluno' })
+  }
+
+  try {
+    const current = await prisma.aluno.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, turmaId: true },
+    })
+    if (!current) return res.status(404).json({ erro: 'Aluno não encontrado' })
+
+    const students = await prisma.aluno.findMany({
+      where: { turmaId: current.turmaId },
+      select: { id: true, nome: true, pontos: true },
+      orderBy: [{ pontos: 'desc' }, { id: 'asc' }],
+    })
+    const index = students.findIndex(student => student.id === current.id)
+    if (index < 0) return res.status(404).json({ erro: 'Aluno não encontrado na turma' })
+
+    const initials = (name: string) => name.trim().split(/\s+/u)
+      .slice(0, 2).map(part => part[0]?.toLocaleUpperCase('pt-BR') ?? '').join('. ') + '.'
+    const me = students[index]
+
+    return res.json({
+      me: { position: index + 1, points: me.pontos, level: progressFor(me.pontos) },
+      rules: {
+        pointsPerPresence: POINTS_PER_PRESENCE,
+        levels: LEVELS,
+        description: `Cada presença válida registrada pela escola vale ${POINTS_PER_PRESENCE} pontos. Correções de presença podem alterar o total.`,
+      },
+      // A leaderboard for a very small class could identify classmates.
+      entries: students.length < 6 ? [] : students.slice(0, 5).map((student, position) => ({
+        position: position + 1,
+        displayName: initials(student.nome),
+        points: student.pontos,
+      })),
+      leaderboardAvailable: students.length >= 6,
+    })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ erro: 'Erro interno ao carregar ranking' })
   }
 }
 
