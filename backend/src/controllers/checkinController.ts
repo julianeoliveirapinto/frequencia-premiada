@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../prisma'
 import { io } from '../server'
+import { POINTS_PER_PRESENCE } from '../gamification/rules'
 
 // 1. REGISTRAR CHECK-IN
 export const registrarCheckin = async (req: Request, res: Response): Promise<any> => {
@@ -45,7 +46,7 @@ export const registrarCheckin = async (req: Request, res: Response): Promise<any
       }),
       prisma.aluno.update({
         where: { id: aluno.id },
-        data: { pontos: { increment: 10 } },
+        data: { pontos: { increment: POINTS_PER_PRESENCE } },
       }),
     ])
 

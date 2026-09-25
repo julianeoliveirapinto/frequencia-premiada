@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../prisma'
 import { io } from '../server'
+import { POINTS_PER_PRESENCE } from '../gamification/rules'
 
 // Editar presença manualmente
 export const editarPresenca = async (req: Request, res: Response) => {
@@ -42,7 +43,7 @@ export const editarPresenca = async (req: Request, res: Response) => {
     if (presencaExiste.status === 'presente' && status === 'falta') {
       await prisma.aluno.update({
         where: { id: presencaExiste.alunoId },
-        data: { pontos: { decrement: 10 } },
+        data: { pontos: { decrement: POINTS_PER_PRESENCE } },
       })
     }
 
@@ -50,7 +51,7 @@ export const editarPresenca = async (req: Request, res: Response) => {
     if (presencaExiste.status === 'falta' && status === 'presente') {
       await prisma.aluno.update({
         where: { id: presencaExiste.alunoId },
-        data: { pontos: { increment: 10 } },
+        data: { pontos: { increment: POINTS_PER_PRESENCE } },
       })
     }
 
@@ -166,7 +167,7 @@ export const registrarPresenca = async (req: Request, res: Response) => {
       }),
       prisma.aluno.update({
         where: { id: aluno.id },
-        data: { pontos: { increment: 10 } },
+        data: { pontos: { increment: POINTS_PER_PRESENCE } },
       }),
     ])
 
